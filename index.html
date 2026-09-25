@@ -173,12 +173,16 @@ ul.bul li::marker{color:var(--ESC1)}
 .kpi-p{font-size:13px;font-weight:350;line-height:1.3}
 .kpi-ch{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;font-weight:700}
 .kpi-ch span small{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);margin-right:4px}
-.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:4px 0 16px}
+.strip{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:12px;margin:4px 0 16px}
+@media (max-width:1100px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.strip{grid-template-columns:minmax(0,1fr)}}
 .sc{border:1px solid var(--border-subtle);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:3px;background:var(--surface-card)}
 .sc-s{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--heading)}
 .sc-l{font-size:13px;font-weight:600;line-height:1.25}
 .sc-v{font-size:20px;font-weight:750;font-variant-numeric:tabular-nums}
 .sc-p{font-size:12px;font-weight:350}
+.sc-f{margin-top:auto;padding-top:6px;border-top:1px solid var(--border-subtle);font-size:11.5px;font-weight:350}
+.sc{min-height:118px}
 .pill-c{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid var(--border)}
 .pill-c.hi{background:var(--ESC3);color:#fff;border-color:var(--ESC3)}
 .pill-c.lo{color:var(--unfav);border-color:var(--P1)}
@@ -323,10 +327,8 @@ footer{margin-top:10px;padding-top:10px;border-top:1px solid var(--rule);display
           
           <p class="csub" id="momNote" style="font-weight:350;margin:0 0 10px"></p>
           <div class="kpis" id="kpis"></div>
-          <div class="findings">
-            <h3>Key findings for the current selection</h3>
-            <ul class="bul" id="insights"></ul>
-          </div>
+          <div class="strip" id="st0" style="margin-top:16px"></div>
+          <div class="takeaways"><h3>Key takeaways</h3><ul class="bul" id="insights"></ul></div>
           <div class="findings">
             <h3>Open a page</h3>
             <div class="cards" id="cards"></div>
@@ -347,13 +349,10 @@ footer{margin-top:10px;padding-top:10px;border-top:1px solid var(--rule);display
         </section>
 
         <section class="page" id="p-s2" data-title="Priority markets">
-          <div class="page-h"><p class="eyebrow">Question 2</p><h2>Recommended top 5 priority markets</h2><span class="badge" data-period></span></div>
+          <div class="page-h"><p class="eyebrow">Question 2</p><h2>Top 5 priority markets</h2><span class="badge" data-period></span></div>
           <div class="strip" id="st2"></div>
-          <div class="rec">
-            <div class="rec-top"><span class="tag">Recommendation</span><span style="font-size:13px;font-weight:350">BI analysis for paid media planning, based on reported Visa spend. Not a reported fact.</span></div>
-            <div class="takeaways" style="background:transparent;border-left-color:var(--ESC3)"><h3>Why these markets</h3><ul class="bul" id="s2b"></ul></div>
-            <div class="tbl" id="s2t"></div>
-          </div>
+          <div class="takeaways"><h3>Key takeaways</h3><ul class="bul" id="s2b"></ul></div>
+          <div class="tbl" id="s2t"></div>
         </section>
 
         <section class="page" id="p-s3" data-title="Top contributors">
@@ -411,7 +410,9 @@ footer{margin-top:10px;padding-top:10px;border-top:1px solid var(--rule);display
         </section>
 
         <section class="page" id="p-notes" data-title="Sources">
-          <div class="page-h"><h2>Sources</h2></div>
+          <div class="page-h"><h2>Sources</h2><span class="badge" data-period></span></div>
+          <div class="strip" id="st8"></div>
+          <div class="takeaways"><h3>Key takeaways</h3><ul class="bul" id="s8b"></ul></div>
           <div class="stack" style="margin-top:12px">
             <div class="box" id="notesSources"><h3>Data sources</h3>
               <dl class="defs">
@@ -492,7 +493,14 @@ function table(el, {title, sub, cols, rows, src, empty}) {
      <div class="scroll" tabindex="0" aria-label="${esc(title)}"><table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table></div>
      <p class="src">${src}</p>`;
 }
-function strip(el, items){ $(el).innerHTML = items.map(([src,l,v,sub])=>`<div class="sc"><span class="sc-s">${src}</span><span class="sc-l">${l}</span><span class="sc-v">${v}</span><span class="sc-p">${sub}</span></div>`).join(''); }
+function strip(el, items){
+  const n = items.length, cols = n<=5 ? n : (n%3===0 ? 3 : 4);
+  $(el).style.setProperty('--n', cols);
+  $(el).innerHTML = items.map(([k,l,v,sub,src])=>`<div class="sc"><span class="sc-s">${k}</span><span class="sc-l">${l}</span><span class="sc-v">${v}</span><span class="sc-p">${sub}</span><span class="sc-f">Source: ${src}</span></div>`).join('');
+}
+const topBy = (arr, key) => [...arr].sort((a,b)=>b[key]-a[key])[0];
+const visCard = (k, m) => m ? [k, shortName(m.name), sh(m.sh26)+' of visitation', `${pts2(m.shpts)} vs. last year · rank ${m.rk26} of 20`, 'Azira'] : [k,'—','—','','Azira'];
+const spCard = (k, m) => m ? [k, shortName(m.name), usdM(m.sp26), `${pct(m.sppct)} YoY · rank ${m.srk26} of 20`, 'Visa Destination Insights'] : [k,'—','—','','Visa Destination Insights'];
 const bullets = (el, arr) => $(el).innerHTML = arr.filter(Boolean).map(b => `<li>${b}</li>`).join('');
 
 /* ---------- compute for a month range ---------- */
@@ -602,16 +610,36 @@ function render(s, e) {
     `<b>Visitation share:</b> Los Angeles and the Inland Empire ${f1(la.sh26+ie.sh26)}% of visitation vs. ${f1(la.sh25+ie.sh25)}% last year; the other ${nh.length} markets ${f1(sum(nh.map(m=>m.sh26)))}% vs. ${f1(sum(nh.map(m=>m.sh25)))}% (Azira).`
   ]);
 
+  strip('st0', [
+    visCard('Top market by visitation', topBy(M,'sh26')),
+    spCard('Top market by spend', topBy(M,'sp26')),
+    visCard('Top visiting market by visitation', topBy(nh,'sh26')),
+    spCard('Top visiting market by spend', topBy(nh,'sp26'))
+  ]);
+  strip('st8', [
+    visCard('Top market by visitation', topBy(M,'sh26')),
+    spCard('Top market by spend', topBy(M,'sp26')),
+    ['Coverage','Lodging data',`${D.strm[PY].length+D.strm[CY].length} months`,`${MONL[0]} ${PY} – ${MONL[D.strm[CY].length-1]} ${CY}`,'STR'],
+    ['Coverage','Visitor spend data',`${D.markets.length} markets`,`${MONL[0]}–${MONL[AVAIL-1]}, ${PY} and ${CY}`,'Visa Destination Insights'],
+    ['Coverage','Visitation data',`${D.markets.length} markets`,`${MONL[0]}–${MONL[AVAIL-1]}, ${PY} and ${CY}`,'Azira']
+  ]);
+  bullets('s8b', [
+    `<b>Lodging:</b> STR monthly occupancy, ADR, RevPAR and room revenue for Anaheim+, ${MONL[0]} ${PY} to ${MONL[D.strm[CY].length-1]} ${CY}.`,
+    `<b>Visitor spend:</b> Visa Destination Insights monthly spend for the top ${D.markets.length} origin markets, ${MONL[0]}–${MONL[AVAIL-1]} ${PY} and ${CY}.`,
+    `<b>Visitation:</b> Azira monthly share of visitors for the top ${D.markets.length} origin markets, ${MONL[0]}–${MONL[AVAIL-1]} ${PY} and ${CY}.`,
+    `<b>Period shown:</b> ${P}.`
+  ]);
+
   /* ----- section 1 ----- */
   const best = [...monthsRev].sort((a,b)=>b.y-a.y), neg = monthsRev.filter(d=>d.y<0);
   const xi = D.strm[CY].length > AVAIL ? AVAIL : -1, augR = xi>=0 ? D.strm[CY][xi] : null, augP = xi>=0 ? D.strm[PY][xi] : null;
   bullets('s1b', [
-    `RevPAR ${pct(strY.revpar)} ($${c.revpar.toFixed(2)} vs. $${p.revpar.toFixed(2)}); room revenue ${pct(strY.rev)} (${usdM(c.rev)} vs. ${usdM(p.rev)}).`,
-    `Rooms sold ${pct(strY.dem)}; room supply ${pct(strY.sup)}; occupancy ${(c.occ*100).toFixed(1)}% vs. ${(p.occ*100).toFixed(1)}% (${sgn((c.occ-p.occ)*100)} pts); ADR ${pct(strY.adr)} to $${c.adr.toFixed(2)}.`,
-    n>1 ? `Highest monthly RevPAR growth: ${best.slice(0,Math.min(3,n)).map(d=>`${d.m} (${pct(d.y)})`).join(', ')}.${neg.length ? ` Below prior year: ${neg.map(d=>`${d.m} (${pct(d.y)})`).join(', ')}.` : ' RevPAR grew in every selected month.'}` : '',
-    `Visa spend (top 20 markets) grew in ${spUp} of ${n} ${mo}; range ${pct(Math.min(...monthRows.map(r=>r.spend)))} to ${pct(Math.max(...monthRows.map(r=>r.spend)))}.`,
-    `Azira share from markets outside Los Angeles and the Inland Empire: ${sh(sum(nh.map(m=>m.sh26)))} vs. ${sh(sum(nh.map(m=>m.sh25)))}, lower in ${monthRows.filter(r=>r.nhp<0).length} of ${n} ${mo}.`,
-    augR ? `${MONL[xi]} ${CY} STR (outside the Azira and Visa window): RevPAR ${pct(((augR.rev/augR.sup)/(augP.rev/augP.sup)-1)*100)}.` : ''
+    `<b>RevPAR:</b> ${pct(strY.revpar)} ($${c.revpar.toFixed(2)} vs. $${p.revpar.toFixed(2)}); room revenue ${pct(strY.rev)} (${usdM(c.rev)} vs. ${usdM(p.rev)}) (STR).`,
+    `<b>Occupancy and ADR:</b> occupancy ${(c.occ*100).toFixed(1)}% vs. ${(p.occ*100).toFixed(1)}% (${pct(strY.occ)}); ADR $${c.adr.toFixed(2)} vs. $${p.adr.toFixed(2)} (${pct(strY.adr)}); rooms sold ${pct(strY.dem)}, supply ${pct(strY.sup)} (STR).`,
+    n>1 ? `<b>By month:</b> highest RevPAR growth ${best.slice(0,Math.min(3,n)).map(d=>`${d.m} (${pct(d.y)})`).join(', ')}.${neg.length ? ` Below prior year: ${neg.map(d=>`${d.m} (${pct(d.y)})`).join(', ')}.` : ' RevPAR grew in every selected month.'} Room revenue +10% or more in ${dblRev} of ${n} months (STR).` : '',
+    `<b>Visitor spend:</b> top 20 markets ${pct(totY)} (${usdB(tot26)} vs. ${usdB(tot25)}), up in ${spUp} of ${n} ${mo}; monthly range ${pct(Math.min(...monthRows.map(r=>r.spend)))} to ${pct(Math.max(...monthRows.map(r=>r.spend)))} (Visa).`,
+    `<b>Visitation:</b> share from markets outside Los Angeles and the Inland Empire ${sh(sum(nh.map(m=>m.sh26)))} vs. ${sh(sum(nh.map(m=>m.sh25)))}, lower in ${monthRows.filter(r=>r.nhp<0).length} of ${n} ${mo} (Azira).`,
+    augR ? `<b>${MONL[xi]} ${CY}:</b> RevPAR ${pct(((augR.rev/augR.sup)/(augP.rev/augP.sup)-1)*100)} (STR; outside the Azira and Visa window).` : ''
   ]);
   table('s1a', {
     title:'Table A · Lodging performance', sub:'Anaheim+ · all hotels · '+P,
@@ -623,11 +651,13 @@ function render(s, e) {
     cols:[{l:'Month',f:r=>`<b>${r.m}</b>`},{l:'Occupancy',n:1,f:r=>dcell(r.occ,pct(r.occ))},{l:'ADR',n:1,f:r=>dcell(r.adr,pct(r.adr))},{l:'RevPAR',n:1,f:r=>dcell(r.rvp,pct(r.rvp))},{l:'Room revenue',n:1,f:r=>dcell(r.rev,pct(r.rev))},{l:'Visa spend',n:1,f:r=>dcell(r.spend,pct(r.spend))},{l:'Azira non-home share',n:1,f:r=>dcell(r.nhp,pts2(r.nhp))}],
     rows: monthRows, src:'Sources: STR (Anaheim+ lodging), Visa Destination Insights (spend, top 20 markets), Azira (share of visitation from markets outside Los Angeles and the Inland Empire, change in pts).'});
   strip('st1', [
-['STR','RevPAR YoY',dcell(strY.revpar,pct(strY.revpar)),`$${c.revpar.toFixed(2)} vs. $${p.revpar.toFixed(2)}`],
-    ['STR','Occupancy YoY',dcell(strY.occ,pct(strY.occ)),`${(c.occ*100).toFixed(1)}% vs. ${(p.occ*100).toFixed(1)}%`],
-    ['STR','ADR YoY',dcell(strY.adr,pct(strY.adr)),`$${c.adr.toFixed(2)} vs. $${p.adr.toFixed(2)}`],
-    ['Visa Destination Insights','Visitor spend YoY, top 20',dcell(totY,pct(totY)),`${usdB(tot26)} vs. ${usdB(tot25)}`],
-    ['Azira','Share from visiting markets',dcell(sum(nh.map(m=>m.sh26))-sum(nh.map(m=>m.sh25)),pts2(sum(nh.map(m=>m.sh26))-sum(nh.map(m=>m.sh25)))),`${sh(sum(nh.map(m=>m.sh26)))} vs. ${sh(sum(nh.map(m=>m.sh25)))} (excl. LA and Inland Empire)`]
+    visCard('Top market by visitation', topBy(M,'sh26')),
+    spCard('Top market by spend', topBy(M,'sp26')),
+    ['Lodging','RevPAR',dcell(strY.revpar,pct(strY.revpar)),`$${c.revpar.toFixed(2)} vs. $${p.revpar.toFixed(2)}`,'STR'],
+    ['Lodging','Occupancy',dcell(strY.occ,pct(strY.occ)),`${(c.occ*100).toFixed(1)}% vs. ${(p.occ*100).toFixed(1)}%`,'STR'],
+    ['Lodging','ADR',dcell(strY.adr,pct(strY.adr)),`$${c.adr.toFixed(2)} vs. $${p.adr.toFixed(2)}`,'STR'],
+    ['Visitor spend','Top 20 markets',dcell(totY,pct(totY)),`${usdB(tot26)} vs. ${usdB(tot25)}`,'Visa Destination Insights'],
+    ['Visitation','Share from visiting markets',dcell(sum(nh.map(m=>m.sh26))-sum(nh.map(m=>m.sh25)),pts2(sum(nh.map(m=>m.sh26))-sum(nh.map(m=>m.sh25)))),`${sh(sum(nh.map(m=>m.sh26)))} vs. ${sh(sum(nh.map(m=>m.sh25)))} (excl. LA and Inland Empire)`,'Azira']
   ]);
   (function(){
     const w=560,h=300,ml=44,mr=12,mt=24,mb=36, vals=monthsRev.map(d=>d.y);
@@ -649,22 +679,25 @@ function render(s, e) {
   const t5sp25=sum(top5.map(m=>m.sp25)), t5sp26=sum(top5.map(m=>m.sp26)), t5sh=sum(top5.map(m=>m.shpts));
   const smallFast = nh.filter(m=>m.sp26<R.floor).sort((a,b)=>b.sppct-a.sppct).slice(0,2);
   bullets('s2b', [
-    top5[0] ? `${top5[0].name}: ${usdM(top5[0].sp26)} in spend, ${pct(top5[0].sppct)} YoY, up in ${top5[0].spend_up} of ${n} ${mo}; ${sh(top5[0].sh26)} of visitation (${pts2(top5[0].shpts)}).` : '',
-    `The five markets: ${usdM(t5sp26)} in spend vs. ${usdM(t5sp25)} (${pct((t5sp26/t5sp25-1)*100)}), adding ${usdM(t5inc)}${nhInc>0?`, ${f1(t5inc/nhInc*100)}% of the non-home increase`:''}.`,
-    `Combined visitation share: ${sh(sum(top5.map(m=>m.sh26)))} vs. ${sh(sum(top5.map(m=>m.sh25)))}.`,
-    next.length ? `Next by score: ${list(next.map(m=>`${shortName(m.name)} (${pct(m.sppct)})`))}.` : '',
-    `Scoring: equal weight on Visa spend volume, spend growth and months with growth; minimum $2M a month (${usdM(R.floor)} for this period) and positive growth; Los Angeles and the Inland Empire excluded.`
+    top5[0] ? `<b>Top priority market:</b> ${top5[0].name}, ${usdM(top5[0].sp26)} in spend (${pct(top5[0].sppct)}), up in ${top5[0].spend_up} of ${n} ${mo}; ${sh(top5[0].sh26)} of visitation (${pts2(top5[0].shpts)}) (Visa, Azira).` : '',
+    `<b>Visitor spend:</b> the five markets ${usdM(t5sp26)} vs. ${usdM(t5sp25)} (${pct((t5sp26/t5sp25-1)*100)}), adding ${usdM(t5inc)}${nhInc>0?`, ${f1(t5inc/nhInc*100)}% of the non-home increase`:''} (Visa).`,
+    `<b>Visitation:</b> combined share ${sh(sum(top5.map(m=>m.sh26)))} vs. ${sh(sum(top5.map(m=>m.sh25)))} (Azira).`,
+    `<b>Lodging:</b> Anaheim+ RevPAR ${pct(strY.revpar)} over the same months (STR).`,
+    next.length ? `<b>Next by score:</b> ${list(next.map(m=>`${shortName(m.name)} (${pct(m.sppct)} spend)`))}.` : '',
+    `<b>Scoring:</b> equal weight on Visa spend volume, spend growth and months with growth; minimum $2M a month (${usdM(R.floor)} for this period) and positive growth; Los Angeles and the Inland Empire excluded.`
   ]);
   strip('st2', [
-['Top priority market', top5[0]?shortName(top5[0].name):'—', top5[0]?dcell(top5[0].sppct,pct(top5[0].sppct)+' spend'):'—', top5[0]?`${usdM(top5[0].sp26)} · ${sh(top5[0].sh26)} of visitation`:''],
-    ['STR','Anaheim+ RevPAR YoY',dcell(strY.revpar,pct(strY.revpar)),`$${c.revpar.toFixed(2)} vs. $${p.revpar.toFixed(2)}`],
-    ['Visa Destination Insights','Top 5 combined spend YoY',dcell((t5sp26/t5sp25-1)*100,pct((t5sp26/t5sp25-1)*100)),`${usdM(t5sp26)} vs. ${usdM(t5sp25)}`],
-    ['Azira','Top 5 combined share change',dcell(t5sh,pts2(t5sh)),`${sh(sum(top5.map(m=>m.sh26)))} of visitation`]
+    ['Top priority market', top5[0]?shortName(top5[0].name):'—', top5[0]?dcell(top5[0].sppct,pct(top5[0].sppct)+' spend'):'—', top5[0]?`${usdM(top5[0].sp26)} · up in ${top5[0].spend_up} of ${n} ${mo}`:'', 'Visa Destination Insights'],
+    visCard('Top 5: top by visitation', topBy(top5,'sh26')),
+    spCard('Top 5: top by spend', topBy(top5,'sp26')),
+    ['Lodging','Anaheim+ RevPAR',dcell(strY.revpar,pct(strY.revpar)),`$${c.revpar.toFixed(2)} vs. $${p.revpar.toFixed(2)}`,'STR'],
+    ['Visitor spend','Top 5 combined',dcell((t5sp26/t5sp25-1)*100,pct((t5sp26/t5sp25-1)*100)),`${usdM(t5sp26)} vs. ${usdM(t5sp25)}`,'Visa Destination Insights'],
+    ['Visitation','Top 5 combined share',sh(sum(top5.map(m=>m.sh26))),`${pts2(t5sh)} vs. last year`,'Azira']
   ]);
   table('s2t', {
-    title:'Recommended priority markets', sub:P,
-    cols:[{l:'Rank',f:r=>r.rank,n:1},{l:'Market',f:r=>`<b>${r.name}</b>`},{l:`Visitation share ${CY}`,n:1,f:r=>sh(r.sh26)},{l:`Spend ${CY}`,n:1,f:r=>usdM(r.sp26)},{l:'Spend YoY',n:1,f:r=>dcell(r.sppct,pct(r.sppct))},{l:'Rationale',cls:'why',f:r=>`Spend ${pct(r.sppct)}, up in ${r.spend_up} of ${n} ${mo}; #${r.srk26} spend market overall; share of non-home visitation ${pts2(r.relpts)}.`}],
-    rows: top5.map((m,i)=>({...m,rank:i+1})), src:'Sources: Visa Destination Insights (spend), Azira (visitation share). Recommendation by Visit Anaheim BI.'
+    title:'Top 5 priority markets', sub:`Ranked by BI score · ${P}`,
+    cols:[{l:'Rank',f:r=>r.rank,n:1},{l:'Market',f:r=>`<b>${r.name}</b>`},{l:`Visitation share ${CY}`,n:1,f:r=>sh(r.sh26)},{l:`Spend ${CY}`,n:1,f:r=>usdM(r.sp26)},{l:'Spend YoY',n:1,f:r=>dcell(r.sppct,pct(r.sppct))},{l:'Basis',cls:'why',f:r=>`Spend ${pct(r.sppct)}, up in ${r.spend_up} of ${n} ${mo}; #${r.srk26} spend market overall; share of non-home visitation ${pts2(r.relpts)}.`}],
+    rows: top5.map((m,i)=>({...m,rank:i+1})), src:'Sources: Visa Destination Insights (spend), Azira (visitation share). Ranking by Visit Anaheim BI scoring (see Sources).'
   });
 
   /* ----- section 3 ----- */
@@ -673,17 +706,20 @@ function render(s, e) {
   const top5sh25 = new Set([...M].sort((a,b)=>a.rk25-b.rk25).slice(0,5).map(m=>m.name)), top5sh26 = [...M].sort((a,b)=>a.rk26-b.rk26).slice(0,5);
   const gainers = M.filter(m=>m.shpts>0);
   bullets('s3b', [
-    `${grewN} of 20 markets grew spend; total change ${usdM(inc)} (${pct(totY)}).`,
-    inc>0 ? `Largest dollar contributor: ${shortName(byInc[0].name)}, ${usdM(byInc[0].sp26-byInc[0].sp25)} (${f1((byInc[0].sp26-byInc[0].sp25)/inc*100)}% of the increase) from ${f1(byInc[0].sp25/tot25*100)}% of prior-year spend; spend ${pct(byInc[0].sppct)}.` : '',
-    nhInc>0 ? `Visiting markets: top three contributors (${list(nhTop3.map(m=>shortName(m.name)))}) delivered ${f1(sum(nhTop3.map(m=>m.sp26-m.sp25))/nhInc*100)}% of the ${usdM(nhInc)} non-home increase from ${f1(sum(nhTop3.map(m=>m.sp25))/nh25*100)}% of non-home spend.` : '',
-    inc>0 ? `Contribution vs. size: ${outsized.length} markets at 1.5× or more, ${inLine.length} at 0.67–1.5×, ${M.filter(m=>cls(m)[1]==='Below size').length} below 0.67× (${list(M.filter(m=>cls(m)[1]==='Below size').map(m=>shortName(m.name)))}).` : '',
-    `Top five by visitation share: ${list(top5sh26.map(m=>`${shortName(m.name)} (${sh(m.sh26)})`))}; ${gainers.length} of 20 markets gained share.`
+    `<b>Visitor spend:</b> ${grewN} of 20 markets grew; total change ${usdM(inc)} (${pct(totY)}) (Visa).`,
+    inc>0 ? `<b>Largest contributor:</b> ${shortName(byInc[0].name)}, ${usdM(byInc[0].sp26-byInc[0].sp25)} (${f1((byInc[0].sp26-byInc[0].sp25)/inc*100)}% of the increase) from ${f1(byInc[0].sp25/tot25*100)}% of prior-year spend; spend ${pct(byInc[0].sppct)} (Visa).` : '',
+    nhInc>0 ? `<b>Visiting markets:</b> top three contributors (${list(nhTop3.map(m=>shortName(m.name)))}) delivered ${f1(sum(nhTop3.map(m=>m.sp26-m.sp25))/nhInc*100)}% of the ${usdM(nhInc)} non-home increase from ${f1(sum(nhTop3.map(m=>m.sp25))/nh25*100)}% of non-home spend (Visa).` : '',
+    inc>0 ? `<b>Even or concentrated:</b> ${outsized.length} markets contributed 1.5× or more their share of spend, ${inLine.length} at 0.67–1.5×, ${M.filter(m=>cls(m)[1]==='Below size').length} below 0.67× (${list(M.filter(m=>cls(m)[1]==='Below size').map(m=>shortName(m.name)))}) (Visa).` : '',
+    `<b>Visitation:</b> top five by share ${list(top5sh26.map(m=>`${shortName(m.name)} (${sh(m.sh26)})`))}; ${gainers.length} of 20 markets gained share (Azira).`,
+    `<b>Lodging:</b> room revenue ${pct(strY.rev)} (${usdM(c.rev)} vs. ${usdM(p.rev)}) (STR).`
   ]);
   strip('st3', [
-['Top contributor', shortName(byInc[0].name), dcell(byInc[0].sp26-byInc[0].sp25,(byInc[0].sp26>=byInc[0].sp25?'+':'−')+usdM(Math.abs(byInc[0].sp26-byInc[0].sp25))), incAll>0?`${f1((byInc[0].sp26-byInc[0].sp25)/incAll*100)}% of the increase · spend ${pct(byInc[0].sppct)}`:''],
-    ['STR','Room revenue YoY',dcell(strY.rev,pct(strY.rev)),`${usdM(c.rev)} vs. ${usdM(p.rev)}`],
-    ['Visa Destination Insights','Spend increase, top 20',dcell(incAll,(incAll>=0?'+':'−')+usdM(Math.abs(incAll))),`${grewN} of 20 markets grew`],
-    ['Azira','Top 5 share of visitation',sh(sum(top5sh26.map(m=>m.sh26))),`${sh(sum(top5sh26.map(m=>m.sh25)))} last year`]
+    ['Top contributor', shortName(byInc[0].name), dcell(byInc[0].sp26-byInc[0].sp25,(byInc[0].sp26>=byInc[0].sp25?'+':'−')+usdM(Math.abs(byInc[0].sp26-byInc[0].sp25))), incAll>0?`${f1((byInc[0].sp26-byInc[0].sp25)/incAll*100)}% of the spend increase`:'', 'Visa Destination Insights'],
+    visCard('Top market by visitation', topBy(M,'sh26')),
+    spCard('Top market by spend', topBy(M,'sp26')),
+    ['Lodging','Room revenue',dcell(strY.rev,pct(strY.rev)),`${usdM(c.rev)} vs. ${usdM(p.rev)}`,'STR'],
+    ['Visitor spend','Increase, top 20',dcell(incAll,(incAll>=0?'+':'−')+usdM(Math.abs(incAll))),`${grewN} of 20 markets grew`,'Visa Destination Insights'],
+    ['Visitation','Top 5 share',sh(sum(top5sh26.map(m=>m.sh26))),`${sh(sum(top5sh26.map(m=>m.sh25)))} last year`,'Azira']
   ]);
   table('s3d', {title:'Table D · Even or concentrated? Contribution to the spend increase vs. market size', sub:'Outsized = contributes at least 1.5× its share of last year\'s spend · In line = 0.67–1.5× · Below size = under 0.67×',
     cols:[{l:'Market',f:r=>`<b>${r.name}</b>`},{l:`Share of ${PY} spend`,n:1,f:r=>sh(r.sp25/tot25*100)},{l:'Share of the increase',n:1,f:r=>incAll>0?sh((r.sp26-r.sp25)/incAll*100):'—'},{l:'Contribution vs. size',n:1,f:r=>incAll>0?idx(r).toFixed(1)+'×':'—'},{l:'Growth pattern',f:r=>{const [k,l]=cls(r); return `<span class="pill-c ${k}">${l}</span>`;}},{l:'Spend YoY',n:1,f:r=>dcell(r.sppct,pct(r.sppct))},{l:'Azira share change',n:1,f:r=>dcell(r.shpts,pts2(r.shpts))}],
@@ -717,16 +753,19 @@ function render(s, e) {
   const em25=sum(emerging.map(m=>m.sp25)), em26=sum(emerging.map(m=>m.sp26)), emsh=sum(emerging.map(m=>m.shpts));
   const emFly = emerging.filter(m=>m.band==='500+'), emLost = emerging.filter(m=>m.shpts<0);
   bullets('s4b', [
-    emerging[0] ? `${emerging[0].name}: spend ${pct(emerging[0].sppct)} (${usdM(emerging[0].sp25)} to ${usdM(emerging[0].sp26)}), up in ${emerging[0].spend_up} of ${n} ${mo}; visitation share ${sh(emerging[0].sh26)} (${pts2(emerging[0].shpts)}).` : '',
-    emerging.length ? `The ${emerging.length} emerging markets: ${usdM(em26)} in spend vs. ${usdM(em25)} (${pct(em25?(em26/em25-1)*100:0)}); combined visitation share ${sh(sum(emerging.map(m=>m.sh26)))} vs. ${sh(sum(emerging.map(m=>m.sh25)))}.` : '',
-    emFly.length ? `Fly markets (500+ miles) on the list: ${list(emFly.map(m=>`${shortName(m.name)} (${pct(m.sppct)})`))}.` : 'No fly markets (500+ miles) are on the list for this period.',
-    `${emLost.length} of ${emerging.length} markets had lower visitation share than last year. All 20 tracked markets appear in both years' files.`
+    emerging[0] ? `<b>Top emerging market:</b> ${emerging[0].name}, spend ${pct(emerging[0].sppct)} (${usdM(emerging[0].sp25)} to ${usdM(emerging[0].sp26)}), up in ${emerging[0].spend_up} of ${n} ${mo}; ${sh(emerging[0].sh26)} of visitation (${pts2(emerging[0].shpts)}) (Visa, Azira).` : '',
+    emerging.length ? `<b>Visitor spend:</b> the ${emerging.length} emerging markets ${usdM(em26)} vs. ${usdM(em25)} (${pct(em25?(em26/em25-1)*100:0)}) (Visa).` : '',
+    emerging.length ? `<b>Visitation:</b> combined share ${sh(sum(emerging.map(m=>m.sh26)))} vs. ${sh(sum(emerging.map(m=>m.sh25)))}; ${emLost.length} of ${emerging.length} markets lower than last year (Azira).` : '',
+    emFly.length ? `<b>Fly markets on the list:</b> ${list(emFly.map(m=>`${shortName(m.name)} (${pct(m.sppct)})`))} (Visa).` : '<b>Fly markets on the list:</b> none for this period.',
+    `<b>Lodging:</b> Anaheim+ occupancy ${(c.occ*100).toFixed(1)}% vs. ${(p.occ*100).toFixed(1)}% (${pct(strY.occ)}) (STR).`
   ]);
   strip('st4', [
-['Top emerging market', emerging[0]?shortName(emerging[0].name):'—', emerging[0]?dcell(emerging[0].sppct,pct(emerging[0].sppct)+' spend'):'—', emerging[0]?`${usdM(emerging[0].sp26)} · ${sh(emerging[0].sh26)} of visitation`:''],
-    ['STR','Occupancy YoY',dcell(strY.occ,pct(strY.occ)),`${(c.occ*100).toFixed(1)}% vs. ${(p.occ*100).toFixed(1)}%`],
-    ['Visa Destination Insights','Emerging markets spend YoY',dcell(em25?(em26/em25-1)*100:0,pct(em25?(em26/em25-1)*100:0)),`${usdM(em26)} vs. ${usdM(em25)}`],
-    ['Azira','Emerging markets share change',dcell(emsh,pts2(emsh)),`${sh(sum(emerging.map(m=>m.sh26)))} of visitation`]
+    ['Top emerging market', emerging[0]?shortName(emerging[0].name):'—', emerging[0]?dcell(emerging[0].sppct,pct(emerging[0].sppct)+' spend'):'—', emerging[0]?`${usdM(emerging[0].sp25)} → ${usdM(emerging[0].sp26)}`:'', 'Visa Destination Insights'],
+    visCard('Emerging: top by visitation', topBy(emerging,'sh26')),
+    spCard('Emerging: top by spend', topBy(emerging,'sp26')),
+    ['Lodging','Occupancy',dcell(strY.occ,pct(strY.occ)),`${(c.occ*100).toFixed(1)}% vs. ${(p.occ*100).toFixed(1)}%`,'STR'],
+    ['Visitor spend','Emerging markets combined',dcell(em25?(em26/em25-1)*100:0,pct(em25?(em26/em25-1)*100:0)),`${usdM(em26)} vs. ${usdM(em25)}`,'Visa Destination Insights'],
+    ['Visitation','Emerging markets share',sh(sum(emerging.map(m=>m.sh26))),`${pts2(emsh)} vs. last year`,'Azira']
   ]);
   table('s4t', {title:'Emerging markets outside the top 5', sub:'Ranked by spend growth · excludes home markets and the recommended top 5',
     cols:[{l:'Market',f:r=>`<b>${r.name}</b>`},{l:`Share ${CY}`,n:1,f:r=>sh(r.sh26)},{l:`Share ${PY}`,n:1,f:r=>sh(r.sh25)},{l:'Share change',n:1,f:r=>dcell(r.shpts,pts2(r.shpts))},{l:`Spend ${CY}`,n:1,f:r=>usdM(r.sp26)},{l:'Spend YoY',n:1,f:r=>dcell(r.sppct,pct(r.sppct))},{l:'Avg length of stay',f:()=>'<span style="font-weight:350">Not provided</span>'},{l:'New this year?',f:()=>'N'}],
@@ -737,21 +776,25 @@ function render(s, e) {
   const lose = M.filter(m=>!(m.rk26<m.rk25 || m.shpts>0)).sort((a,b)=>(b.rk26-b.rk25)-(a.rk26-a.rk25)||a.shpts-b.shpts);
   const climbers = gain.filter(m=>m.rk26<m.rk25).slice(0,3), worstRank = lose[0], worstShare = [...M].sort((a,b)=>a.shpts-b.shpts)[0];
   const relTop = [...nh].sort((a,b)=>b.relpts-a.relpts).slice(0,3);
-  bullets('s5b', [
-    `${gainers.length ? `Gained share: ${list(gainers.map(m=>`${shortName(m.name)} (${pts2(m.shpts)})`))}` : 'No market gained share'}; ${20-gainers.length} markets lost share.`,
-    climbers.length ? `Largest rank gains: ${list(climbers.map(m=>`${shortName(m.name)} (${m.rk25} → ${m.rk26})`))}.` : 'No market improved its rank.',
-    worstRank && worstRank.rk26>worstRank.rk25 ? `Largest rank drop: ${shortName(worstRank.name)} (${worstRank.rk25} → ${worstRank.rk26}). Largest share loss: ${shortName(worstShare.name)} (${pts2(worstShare.shpts)}).` : `Largest share loss: ${shortName(worstShare.name)} (${pts2(worstShare.shpts)}).`,
-    `Share of non-home visitation, largest gains: ${list(relTop.map(m=>`${shortName(m.name)} (${pts2(m.relpts)})`))}.`
-  ]);
-  const moveCols = [{l:'Market',f:r=>`<b>${r.name}</b>`},{l:'Prior rank',n:1,f:r=>r.rk25},{l:'Current rank',n:1,f:r=>r.rk26},{l:'Rank change',n:1,f:r=>{const d=r.rk25-r.rk26; return d===0?'▶ 0':dcell(d,(d>0?'+':'−')+Math.abs(d));}},{l:'Share change',n:1,f:r=>dcell(r.shpts,pts2(r.shpts))},{l:'Share of non-home visitation',n:1,f:r=>r.home?'<span style="font-weight:350">Home market</span>':`${sh(r.rel25)} → ${sh(r.rel26)}`},{l:'Non-home change',n:1,f:r=>r.home?'—':dcell(r.relpts,pts2(r.relpts))},{l:'Visa spend YoY',n:1,f:r=>dcell(r.sppct,pct(r.sppct))}];
   const topGain=[...M].sort((a,b)=>b.shpts-a.shpts)[0];
   const g25=sum(gain.map(m=>m.sp25)), g26=sum(gain.map(m=>m.sp26)), l25=sum(lose.map(m=>m.sp25)), l26=sum(lose.map(m=>m.sp26));
+  bullets('s5b', [
+    `<b>Gained share:</b> ${gainers.length ? list(gainers.map(m=>`${shortName(m.name)} (${pts2(m.shpts)})`)) : 'none'}; ${20-gainers.length} markets lost share (Azira).`,
+    climbers.length ? `<b>Largest rank gains:</b> ${list(climbers.map(m=>`${shortName(m.name)} (${m.rk25} → ${m.rk26})`))} (Azira).` : '<b>Largest rank gains:</b> none.',
+    `<b>Largest losses:</b> ${worstRank && worstRank.rk26>worstRank.rk25 ? `rank ${shortName(worstRank.name)} (${worstRank.rk25} → ${worstRank.rk26}); ` : ''}share ${shortName(worstShare.name)} (${pts2(worstShare.shpts)}) (Azira).`,
+    `<b>Share of non-home visitation:</b> largest gains ${list(relTop.map(m=>`${shortName(m.name)} (${pts2(m.relpts)})`))} (Azira).`,
+    `<b>Visitor spend:</b> gaining markets ${pct((g26/g25-1)*100)}, losing markets ${pct(l25?(l26/l25-1)*100:0)} (Visa).`,
+    `<b>Lodging:</b> rooms sold ${pct(strY.dem)} (STR).`
+  ]);
+  const moveCols = [{l:'Market',f:r=>`<b>${r.name}</b>`},{l:'Prior rank',n:1,f:r=>r.rk25},{l:'Current rank',n:1,f:r=>r.rk26},{l:'Rank change',n:1,f:r=>{const d=r.rk25-r.rk26; return d===0?'▶ 0':dcell(d,(d>0?'+':'−')+Math.abs(d));}},{l:'Share change',n:1,f:r=>dcell(r.shpts,pts2(r.shpts))},{l:'Share of non-home visitation',n:1,f:r=>r.home?'<span style="font-weight:350">Home market</span>':`${sh(r.rel25)} → ${sh(r.rel26)}`},{l:'Non-home change',n:1,f:r=>r.home?'—':dcell(r.relpts,pts2(r.relpts))},{l:'Visa spend YoY',n:1,f:r=>dcell(r.sppct,pct(r.sppct))}];
   strip('st5', [
-['Top gaining share', shortName(topGain.name), dcell(topGain.shpts,pts2(topGain.shpts)), `${sh(topGain.sh25)} → ${sh(topGain.sh26)} · rank ${topGain.rk25} → ${topGain.rk26}`],
-    ['Top losing share', shortName(worstShare.name), dcell(worstShare.shpts,pts2(worstShare.shpts)), `${sh(worstShare.sh25)} → ${sh(worstShare.sh26)} · rank ${worstShare.rk25} → ${worstShare.rk26}`],
-    ['STR','Rooms sold YoY',dcell(strY.dem,pct(strY.dem)),'Anaheim+'],
-    ['Visa Destination Insights','Spend YoY: gaining vs. losing',`${pct((g26/g25-1)*100)} vs. ${pct(l25?(l26/l25-1)*100:0)}`,'Table A vs. Table B markets'],
-    ['Azira','Markets that gained share',`${gainers.length} of 20`,`${gain.length} improved rank or share`]
+    ['Top gaining share', shortName(topGain.name), dcell(topGain.shpts,pts2(topGain.shpts)), `${sh(topGain.sh25)} → ${sh(topGain.sh26)} · rank ${topGain.rk25} → ${topGain.rk26}`, 'Azira'],
+    ['Top losing share', shortName(worstShare.name), dcell(worstShare.shpts,pts2(worstShare.shpts)), `${sh(worstShare.sh25)} → ${sh(worstShare.sh26)} · rank ${worstShare.rk25} → ${worstShare.rk26}`, 'Azira'],
+    visCard('Top market by visitation', topBy(M,'sh26')),
+    spCard('Top market by spend', topBy(M,'sp26')),
+    ['Lodging','Rooms sold',dcell(strY.dem,pct(strY.dem)),'Anaheim+','STR'],
+    ['Visitor spend','Gaining vs. losing markets',`${pct((g26/g25-1)*100)} vs. ${pct(l25?(l26/l25-1)*100:0)}`,'Table A vs. Table B markets','Visa Destination Insights'],
+    ['Visitation','Markets that gained share',`${gainers.length} of 20`,`${gain.length} improved rank or share`,'Azira']
   ]);
   table('s5a', {title:'Table A · Gaining', sub:'Improved rank or gained share points', cols:moveCols, rows:gain, src:'Sources: Azira (share and rank among the 20 tracked markets), Visa Destination Insights (spend).'});
   table('s5l', {title:'Table B · Losing', sub:'Dropped rank, or held rank while losing share', cols:moveCols, rows:lose, src:'Sources: Azira, Visa Destination Insights. Each market appears in one table only.'});
@@ -762,17 +805,20 @@ function render(s, e) {
   const dsh26=bandAgg[0].s26+bandAgg[1].s26, dsh25=bandAgg[0].s25+bandAgg[1].s25;
   const topDrive=[...M].filter(m=>m.band!=='500+').sort((a,b)=>b.sh26-a.sh26)[0], topFly=[...M].filter(m=>m.band==='500+').sort((a,b)=>b.sh26-a.sh26)[0];
   bullets('s6b', [
-    `Drive markets (under 500 miles): ${f1(drv/tot26*100)}% of top-20 spend vs. ${f1(drv25/tot25*100)}% last year; ${f1(dsh26)}% of visitation vs. ${f1(dsh25)}%.`,
-    `Spend YoY by band: 0–250 mi ${pct(bandAgg[0].py)}, 250–500 mi ${pct(bandAgg[1].py)}, 500+ mi ${pct(bandAgg[2].py)}.`,
-    `Visitation share by band: 0–250 mi ${f1(bandAgg[0].s25)}% → ${f1(bandAgg[0].s26)}%, 250–500 mi ${f1(bandAgg[1].s25)}% → ${f1(bandAgg[1].s26)}%, 500+ mi ${f1(bandAgg[2].s25)}% → ${f1(bandAgg[2].s26)}%.`,
-    `Top drive market: ${shortName(topDrive.name)} (${sh(topDrive.sh26)} share, spend ${pct(topDrive.sppct)}). Top fly market: ${shortName(topFly.name)} (${sh(topFly.sh26)} share, spend ${pct(topFly.sppct)}).`
+    `<b>Drive vs. fly:</b> drive markets (under 500 miles) ${f1(drv/tot26*100)}% of top-20 spend vs. ${f1(drv25/tot25*100)}% last year (Visa); ${f1(dsh26)}% of visitation vs. ${f1(dsh25)}% (Azira).`,
+    `<b>Visitor spend by band:</b> 0–250 mi ${pct(bandAgg[0].py)}, 250–500 mi ${pct(bandAgg[1].py)}, 500+ mi ${pct(bandAgg[2].py)} (Visa).`,
+    `<b>Visitation by band:</b> 0–250 mi ${f1(bandAgg[0].s25)}% → ${f1(bandAgg[0].s26)}%, 250–500 mi ${f1(bandAgg[1].s25)}% → ${f1(bandAgg[1].s26)}%, 500+ mi ${f1(bandAgg[2].s25)}% → ${f1(bandAgg[2].s26)}% (Azira).`,
+    `<b>Top markets:</b> drive ${shortName(topDrive.name)} (${sh(topDrive.sh26)} of visitation); fly ${shortName(topFly.name)} (${sh(topFly.sh26)}) by visitation and ${shortName(topBy(M.filter(m=>m.band==='500+'),'sp26').name)} (${usdM(topBy(M.filter(m=>m.band==='500+'),'sp26').sp26)}) by spend (Azira, Visa).`,
+    `<b>Lodging:</b> ADR $${c.adr.toFixed(2)} vs. $${p.adr.toFixed(2)} (${pct(strY.adr)}) (STR).`
   ]);
   strip('st6', [
-['Top drive market', shortName(topDrive.name), sh(topDrive.sh26)+' share', `Spend ${pct(topDrive.sppct)} · ${topDrive.band} miles`],
-    ['Top fly market', shortName(topFly.name), sh(topFly.sh26)+' share', `Spend ${pct(topFly.sppct)} · 500+ miles`],
-    ['STR','ADR YoY',dcell(strY.adr,pct(strY.adr)),`$${c.adr.toFixed(2)} vs. $${p.adr.toFixed(2)}`],
-    ['Visa Destination Insights','Drive share of spend',sh(drv/tot26*100),`${sh(drv25/tot25*100)} last year`],
-    ['Azira','Drive share of visitation',sh(dsh26),`${sh(dsh25)} last year`]
+    visCard('Drive: top by visitation', topBy(M.filter(m=>m.band!=='500+'),'sh26')),
+    spCard('Drive: top by spend', topBy(M.filter(m=>m.band!=='500+'),'sp26')),
+    visCard('Fly: top by visitation', topBy(M.filter(m=>m.band==='500+'),'sh26')),
+    spCard('Fly: top by spend', topBy(M.filter(m=>m.band==='500+'),'sp26')),
+    ['Lodging','ADR',dcell(strY.adr,pct(strY.adr)),`$${c.adr.toFixed(2)} vs. $${p.adr.toFixed(2)}`,'STR'],
+    ['Visitor spend','Drive share of spend',sh(drv/tot26*100),`${sh(drv25/tot25*100)} last year`,'Visa Destination Insights'],
+    ['Visitation','Drive share of visitation',sh(dsh26),`${sh(dsh25)} last year`,'Azira']
   ]);
   table('s6sum', {title:'Drive vs. fly mix by distance band', sub:'20 tracked markets',
     cols:[{l:'Band',f:r=>`<b>${r.b} miles</b> <span class="tag o">${r.b==='500+'?'Fly':'Drive'}</span>`},{l:'Markets',n:1,f:r=>r.n},{l:`Share ${PY}`,n:1,f:r=>sh(r.s25)},{l:`Share ${CY}`,n:1,f:r=>sh(r.s26)},{l:'Share change',n:1,f:r=>dcell(r.sp,pts2(r.sp))},{l:`Spend ${PY}`,n:1,f:r=>usdM(r.p25)},{l:`Spend ${CY}`,n:1,f:r=>usdM(r.p26)},{l:'Spend YoY',n:1,f:r=>dcell(r.py,pct(r.py))}],
@@ -788,18 +834,20 @@ function render(s, e) {
   const topOut = [...allN.length?allN:M].sort((a,b)=>(b.spend_up-a.spend_up)||(b.sppct-a.sppct))[0];
   const minUp = Math.min(...M.map(m=>m.spend_up)), leastC = M.filter(m=>m.spend_up===minUp), shareAll = M.filter(m=>m.share_up===n);
   bullets('s7b', [
-    n===1 ? `One month selected (${MONL[s]}).` : '',
-    `${allN.length} of 20 markets grew spend in ${n===1?'the selected month':`all ${n} selected months`}${allN.length?`: ${list(allN.map(m=>shortName(m.name)))}`:''}.`,
-    topOut ? `Highest spend growth among them: ${shortName(topOut.name)} (${pct(topOut.sppct)}, ${usdM(topOut.sp25)} to ${usdM(topOut.sp26)}).` : '',
-    minUp<n ? `Fewest months with spend growth: ${list(leastC.map(m=>shortName(m.name)))} (${minUp} of ${n}).` : '',
-    `Visitation share higher in ${n===1?'the selected month':'every month'}: ${shareAll.length ? list(shareAll.map(m=>shortName(m.name))) : 'no market'}.`
+    `<b>Spend every month:</b> ${allN.length} of 20 markets grew spend in ${n===1?'the selected month':`all ${n} selected months`}${allN.length?`: ${list(allN.map(m=>shortName(m.name)))}`:''} (Visa).`,
+    topOut ? `<b>Top outperformer by spend:</b> ${shortName(topOut.name)}, ${pct(topOut.sppct)} (${usdM(topOut.sp25)} to ${usdM(topOut.sp26)}), up in ${topOut.spend_up} of ${n} ${mo} (Visa).` : '',
+    minUp<n ? `<b>Fewest months with growth:</b> ${list(leastC.map(m=>shortName(m.name)))} (${minUp} of ${n}) (Visa).` : '',
+    `<b>Visitation every month:</b> share higher in ${n===1?'the selected month':'every month'} for ${shareAll.length ? list(shareAll.map(m=>shortName(m.name))) : 'no market'} (Azira).`,
+    `<b>Lodging:</b> RevPAR grew in ${monthRows.filter(r=>r.rvp>0).length} of ${n} ${mo} (STR).`
   ]);
   const rvUp = monthRows.filter(r=>r.rvp>0).length;
+  const topShOut = [...M].sort((a,b)=>(b.share_up-a.share_up)||(b.shpts-a.shpts))[0];
   strip('st7', [
-['Top outperforming market', shortName(topOut.name), dcell(topOut.sppct,pct(topOut.sppct)+' spend'), `Spend up in ${topOut.spend_up} of ${n} ${mo}`],
-    ['STR','Months with RevPAR growth',`${rvUp} of ${n}`,'Anaheim+'],
-    ['Visa Destination Insights','Markets with spend growth every month',`${allN.length} of 20`,n===1?'Selected month':`All ${n} selected months`],
-    ['Azira','Markets gaining share every month',`${shareAll.length} of 20`,n===1?'Selected month':`All ${n} selected months`]
+    ['Top outperformer by spend', shortName(topOut.name), dcell(topOut.sppct,pct(topOut.sppct)), `Spend up in ${topOut.spend_up} of ${n} ${mo}`, 'Visa Destination Insights'],
+    ['Top outperformer by visitation', shortName(topShOut.name), dcell(topShOut.shpts,pts2(topShOut.shpts)), `Share up in ${topShOut.share_up} of ${n} ${mo}`, 'Azira'],
+    ['Lodging','Months with RevPAR growth',`${rvUp} of ${n}`,'Anaheim+','STR'],
+    ['Visitor spend','Markets up every month',`${allN.length} of 20`,n===1?'Selected month':`All ${n} selected months`,'Visa Destination Insights'],
+    ['Visitation','Markets gaining share every month',`${shareAll.length} of 20`,n===1?'Selected month':`All ${n} selected months`,'Azira']
   ]);
   HEAT = {M, s, e, n}; heat(HEAT_MODE);
 
@@ -807,7 +855,7 @@ function render(s, e) {
   const climb = climbers[0];
   const cardData = [
     ['p-s1', 'Growth drivers', pct(strY.revpar)+'<span class="u">RevPAR</span>', `Room revenue ${pct(strY.rev)}; occupancy ${pct(strY.occ)} and ADR ${pct(strY.adr)}.`],
-    ['p-s2', 'Priority markets', top5[0]?shortName(top5[0].name):'—', `Recommended: ${list(top5.map(m=>shortName(m.name)))}.`],
+    ['p-s2', 'Priority markets', top5[0]?shortName(top5[0].name):'—', `Top 5: ${list(top5.map(m=>shortName(m.name)))}.`],
     ['p-s3', 'Top contributors', pct(totY)+'<span class="u">spend</span>', `${grewN} of 20 markets grew spend. ${outsized.length?`${outsized.length} markets contribute far more than their size (led by ${shortName(outsized[0].name)}).`:'Growth is broadly even across markets.'}`],
     ['p-s4', 'Emerging markets', emerging[0]?shortName(emerging[0].name):'—', emerging[0] ? `Fastest outside the top 5 at ${pct(emerging[0].sppct)} spend growth.` : 'No emerging markets this period.'],
     ['p-s5', 'Gain/Lose Share', `${gainers.length}<span class="u">gained</span>`, `${gainers.length?list(gainers.map(m=>shortName(m.name)))+' gained share.':'No market gained share.'}${climb?` Top climber: ${shortName(climb.name)} (${climb.rk25} → ${climb.rk26}).`:''}`],
@@ -839,9 +887,9 @@ $('hmSpend').onclick = ()=>heat('spend'); $('hmShare').onclick = ()=>heat('share
 /* ---------- pages, sidebar, section pills ---------- */
 const PAGES = ['p-summary','p-s1','p-s2','p-s3','p-s4','p-s5','p-s6','p-s7','p-notes'];
 const SIDE = [
-  ['p-summary','Overview',null,[['kpis','Headline figures'],['insights','Key findings'],['cards','Open a page']]],
+  ['p-summary','Overview',null,[['kpis','Headline figures'],['insights','Key takeaways'],['cards','Open a page']]],
   ['p-s1','Growth drivers',1,[['s1a','Lodging performance'],['s1m','Month by month'],['s1c','RevPAR by month']]],
-  ['p-s2','Priority markets',2,[['s2t','Recommended top 5']]],
+  ['p-s2','Priority markets',2,[['s2t','Top 5 priority markets']]],
   ['p-s3','Top contributors',3,[['s3a','Visitation share'],['s3bt','Visitor spend'],['s3chart','Spend growth chart'],['s3c','Largest growth'],['s3d','Even or concentrated?']]],
   ['p-s4','Emerging markets',4,[['s4t','Emerging markets'],['s4other','Other named markets']]],
   ['p-s5','Gain/Lose Share',5,[['s5a','Gaining'],['s5l','Losing']]],
